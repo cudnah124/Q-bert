@@ -1,295 +1,264 @@
-DQN Agent for Q*bert - Atari Game
-Project Overview
-This project implements a Deep Q-Network (DQN) agent to learn and play the classic Q*bert Atari 2600 game. Q*bert is an excellent benchmark for deep reinforcement learning because it provides a good balance between complexity and manageability, requiring both spatial reasoning and strategic planning.
+# DQN Agent for Q*bert - Atari Game
 
-Why Q*bert?
-Ideal Action Space: 6 discrete actions (makes training tractable)
+Deep Q-Network (DQN) implementation for learning to play the classic Q*bert Atari 2600 game using reinforcement learning.
 
-Rich State Space: Visual input from 210×160 pixel screens
+## Table of Contents
+- [About Q*bert](#about-qbert)
+- [Why This Game? ](#why-this-game)
+- [Game Mechanics](#game-mechanics)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Benchmarks](#benchmarks)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
 
-Progressive Difficulty: 9+ levels with increasing complexity
+## About Q*bert
 
-Excellent Benchmark Data: Abundant research data from 2016-2024 for validation
+Q*bert is an excellent benchmark for deep reinforcement learning with: 
+- **6 discrete actions** - tractable action space
+- **Visual input** - 210×160 pixel screens
+- **Progressive difficulty** - 9+ levels with increasing complexity
+- **Clear rewards** - +25 points per cube color change
+- **Strategic gameplay** - requires planning and spatial awareness
 
-Clear Reward Signal: Each cube color change = +25 points
+## Why This Game?
 
-Strategic Learning: Requires planning and spatial awareness, not just reflex
+Q*bert provides unique challenges for RL agents: 
 
-Game Mechanics
-Objective
-Change the color of all cubes in the pyramid to the target color (shown in top-left) by hopping on them. When all cubes match the target color, advance to the next round.
+1. **Dynamic Environment**: Game rules change between levels
+2. **Multi-objective**:  Must balance cube completion with enemy evasion
+3. **Long-term Planning**: Strategic disc usage for +500 point bonuses
+4. **Non-stationary**: Later levels revert cube colors if stepped on again
 
-Game Rules
-Component	Description
-Playfield	3D isometric pyramid of 28 cubes
-Controls	4-way joystick (+ 2 special actions = 6 total actions)
-Level 1	Hop once on each cube to change color
-Level 2	Hop twice on each cube (intermediate → target color)
-Level 3+	Complex color mechanics; later cubes revert if stepped again
-Enemies	Coily (snake), Ugg, Wrong Way, Slick, Sam
-Mechanics That Make This Challenging for RL
-Dynamic Cube Behavior:
+## Game Mechanics
 
-Early levels (1-2): Simple one-touch or two-touch mechanics
+### Objective
+Change all pyramid cubes to the target color (shown top-left) by hopping on them.
 
-Later levels (5+): Cubes revert to original color if touched again after completion
+### Reward Structure
+| Action | Points |
+|--------|--------|
+| Change cube color | +25 |
+| Catch green ball | +100 |
+| Defeat Slick/Sam | +300 |
+| Defeat Coily via disc | +500 |
+| Complete screen | 1,000 + (250 × level) |
+| Unused disc | 50-100 |
 
-Creates non-stationary environment where policy must adapt per level
+### Level Progression
+- **Level 1**: Hop once to change color
+- **Level 2**: Hop twice (intermediate → target)
+- **Level 3+**: Cubes revert if stepped on again after completion
 
-Enemy Patterns:
+### Enemies
+- **Coily** (snake): Actively pursues Q*bert
+- **Ugg & Wrong Way**:  Move horizontally
+- **Slick & Sam**:  Change cube colors back
 
-Coily actively pursues Q*bert
+## Installation
 
-Requires both evasion and engagement strategies
-
-Different speeds and behaviors per level
-
-Escape Mechanics:
-
-Floating discs teleport Q*bert to pyramid top
-
-If Coily follows, he falls and dies (all enemies disappear)
-
-Strategic use improves scores significantly
-
-Reward Structure
-Action	Points
-Change cube color	+25
-Catch green ball	+100
-Defeat enemy (Slick/Sam)	+300
-Defeat Coily via disc	+500
-Screen completion bonus	1,000 (Level 1) + 250 per level
-Unused discs at level end	50-100 per disc
-Benchmark Performance Data
-Vanilla DQN vs Double DQN vs Dueling DQN
-Historical results from Stanford CS 2024 research:
-
-Algorithm	Score	Episodes	Improvement
-Vanilla DQN	734	3,601	Baseline
-Double DQN	1,428	4,718	+94%
-Dueling DQN	2,256	6,369	+58% (over Double)
-Key Observations:
-
-Training curves show clear oscillations (agent adapting to each level's new rules)
-
-Double DQN reduces overestimation bias significantly
-
-Dueling DQN further improves by separating value and advantage functions
-
-Scores still increasing at 6,369 episodes (no plateau reached)
-
-Historical Baseline (2016 - Stanford CS229)
-Algorithm	Score
-Vanilla DQN	700
-DRQN (Recurrent)	850
-Implementation Requirements
-Environment Setup
-bash
+```bash
 # Install dependencies
 pip install gym[atari]
 pip install ale-py
 pip install torch torchvision torchaudio
 pip install numpy matplotlib
 
-# Optional: For Atari ROM files
+# Download Atari ROMs
 pip install autorom[accept-rom-license]
-Game Environment
-python
-import gym
-env = gym.make("Qbert-v4")  # or "Qbert-ram-v4" for RAM input
+```
 
-# Action space
+## 🏃 Quick Start
+
+### 1. Train a Model
+
+```python
+# Vanilla DQN
+python train.py --algorithm dqn --episodes 5000
+
+# Double DQN (recommended)
+python train.py --algorithm double_dqn --episodes 5000
+
+# Dueling DQN (best performance)
+python train.py --algorithm dueling_dqn --episodes 6000
+```
+
+### 2. Evaluate Trained Agent
+
+```python
+python evaluate.py --checkpoint checkpoints/dqn_best.pth --episodes 10
+```
+
+### 3. Environment Setup
+
+```python
+import gym
+
+env = gym.make("Qbert-v4")
+
+# Action space (6 actions)
 # 0: NOOP
 # 1: FIRE
 # 2: UP
 # 3: RIGHT
 # 4: LEFT
 # 5: DOWN
-Expected Training Timeline
-Hardware	DQN (Vanilla)	Double DQN	Dueling DQN
-GPU (RTX 3080+)	2-3 hours	3-4 hours	4-5 hours
-GPU (RTX 2080)	4-6 hours	6-8 hours	8-10 hours
-CPU Only	24-48 hours	Not recommended	Not recommended
-Project Structure
-text
-dqn-qbert/
+```
+
+## Project Structure
+
+```
+Q-bert/
 ├── README.md                 # This file
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Dependencies
 ├── config.py                 # Hyperparameters
-├── model.py                  # DQN network architecture
-├── agent.py                  # DQN agent implementation
+├── model.py                  # DQN architectures
+├── agent.py                  # DQN agent
 ├── environment.py            # Environment wrapper
 ├── train.py                  # Training loop
 ├── evaluate.py               # Evaluation script
 ├── utils/
-│   ├── replay_buffer.py      # Experience replay buffer
+│   ├── replay_buffer.py      # Experience replay
 │   ├── preprocessing.py      # Frame preprocessing
-│   └── visualization.py      # Plot results
+│   └── visualization.py      # Plotting tools
 └── checkpoints/              # Saved models
-Quick Start
-1. Basic Training
-python
-python train.py --algorithm dqn --episodes 5000
-2. Compare Algorithms
-python
-# Train all three variants
-python train.py --algorithm dqn
-python train.py --algorithm double_dqn
-python train.py --algorithm dueling_dqn
-3. Evaluate Trained Agent
-python
-python evaluate.py --checkpoint checkpoints/dqn_best.pth --episodes 10
-Key Hyperparameters to Tune
-Parameter	Default	Range	Notes
-Learning Rate	0.0001	[1e-5, 1e-3]	Standard: 1e-4
-Discount Factor (γ)	0.99	[0.95, 0.999]	Higher = longer horizon
-Epsilon Start	1.0	[0.5, 1.0]	Exploration rate
-Epsilon Final	0.01	[0.001, 0.1]	Minimum exploration
-Epsilon Decay	500k	[100k, 1M]	Decay schedule
-Replay Buffer Size	100k	[50k, 1M]	Memory usage
-Batch Size	32	[16, 64]	Gradient step size
-Update Frequency	4	[1, 10]	Steps between updates
-Target Update	1000	[500, 5000]	Sync target network
-Expected Challenges & Solutions
-Challenge 1: High Variance in Rewards
-Problem: Q*bert has oscillating rewards when rules change each level
-Solution: Use target networks and double Q-learning to stabilize training
+```
 
-Challenge 2: Long Convergence Time
-Problem: Needs 3,600+ episodes for vanilla DQN
-Solution: Consider Double DQN or Dueling DQN variants
+## Benchmarks
 
-Challenge 3: Exploration vs Exploitation
-Problem: ε-greedy may not explore efficiently
-Solution: Use Prioritized Experience Replay (see improvements section)
+### Algorithm Comparison (Stanford CS224R 2024)
 
-Challenge 4: Memory Constraints
-Problem: Large replay buffer + network memory
-Solution: Use frame stacking (4 frames) and grayscale preprocessing
+| Algorithm | Avg Score | Episodes | Improvement |
+|-----------|-----------|----------|-------------|
+| Vanilla DQN | 734 | 3,601 | Baseline |
+| Double DQN | 1,428 | 4,718 | +94% |
+| Dueling DQN | 2,256 | 6,369 | +58% |
 
-Validation Metrics
-Compare your results against benchmarks:
+### Historical Baselines (Stanford CS229 2016)
 
-python
-# Target scores to validate implementation
+| Algorithm | Avg Score |
+|-----------|-----------|
+| Vanilla DQN | 700 |
+| DRQN (Recurrent) | 850 |
+
+### Expected Training Time
+
+| Hardware | Vanilla DQN | Double DQN | Dueling DQN |
+|----------|-------------|------------|-------------|
+| RTX 3080+ | 2-3 hours | 3-4 hours | 4-5 hours |
+| RTX 2080 | 4-6 hours | 6-8 hours | 8-10 hours |
+| CPU Only | 24-48 hours | Not recommended | Not recommended |
+
+## Configuration
+
+### Key Hyperparameters
+
+| Parameter | Default | Range | Notes |
+|-----------|---------|-------|-------|
+| Learning Rate | 0.0001 | [1e-5, 1e-3] | Standard:  1e-4 |
+| Discount (γ) | 0.99 | [0.95, 0.999] | Higher = longer horizon |
+| Epsilon Start | 1.0 | [0.5, 1.0] | Initial exploration |
+| Epsilon Final | 0.01 | [0.001, 0.1] | Min exploration |
+| Epsilon Decay | 500k | [100k, 1M] | Decay steps |
+| Replay Buffer | 100k | [50k, 1M] | Memory usage |
+| Batch Size | 32 | [16, 64] | Gradient samples |
+| Update Freq | 4 | [1, 10] | Steps between updates |
+| Target Update | 1000 | [500, 5000] | Network sync |
+
+### Validation Targets
+
+```python
 targets = {
     "vanilla_dqn": 734,      # ± 100
     "double_dqn": 1428,      # ± 150
     "dueling_dqn": 2256,     # ± 200
 }
-If your scores are significantly lower, check:
+```
 
-✓ Preprocessing: Frame stacking, grayscale, normalization
+If scores are significantly lower, check:
+- ✓ Frame preprocessing (stacking, grayscale, normalization)
+- ✓ Network architecture (Conv2D layers)
+- ✓ Hyperparameters (learning rate, update frequency)
+- ✓ Replay buffer implementation
+- ✓ Target network synchronization
 
-✓ Network architecture: Conv2d layers matching original
+## Troubleshooting
 
-✓ Hyperparameters: Learning rate, update frequencies
+### Agent camps in corners
+- **Cause**: Disc mechanics not implemented properly
+- **Fix**: Verify disc logic and enemy collision detection
 
-✓ Replay buffer: Experience sampling correctness
+### Training diverges (NaN loss)
+- **Cause**: Learning rate too high or reward scaling issues
+- **Fix**: Reduce LR to 1e-5; normalize rewards to [-1, 1]
 
-✓ Target network: Synchronization schedule
+### Stuck at low score (1000+ episodes)
+- **Cause**: Insufficient exploration
+- **Fix**: Increase initial ε or add noise to action selection
 
-Literature & References
-Original Papers
-DQN (2015): Mnih et al. "Human-level control through deep reinforcement learning" - Nature
+### Memory errors
+- **Cause**: Replay buffer or batch too large
+- **Fix**: Reduce buffer to 50k; reduce batch size to 16
 
-Double DQN (2015): Van Hasselt et al. "Deep Reinforcement Learning with Double Q-learning"
+## Roadmap
 
-Dueling DQN (2015): Wang et al. "Dueling Network Architectures for Deep Reinforcement Learning"
+### Level 1: Core Implementation
+- [x] Vanilla DQN
+- [x] Experience Replay
+- [x] Target Network
 
-Benchmark Studies
-Stanford CS229 (2016): Deep Q-Learning with Recurrent Neural Networks
+### Level 2: Algorithm Improvements
+- [ ] Double DQN
+- [ ] Dueling DQN
+- [ ] Prioritized Experience Replay
 
-Stanford CS224R (2024): Q*bert Baseline Performance Comparison
+### Level 3: Advanced Methods
+- [ ] Rainbow DQN
+- [ ] DRQN (LSTM)
+- [ ] Noisy Networks
 
-Empirical Study (2024): Comparative Study of Atari Algorithms
+### Level 4: Analysis
+- [ ] Learning curves with confidence intervals
+- [ ] Attention heatmaps
+- [ ] Action value visualization
+- [ ] Gameplay recordings
 
-Implementation Guides
-PyTorch DQN Tutorial: https://pytorch.org/tutorials/
+## References
 
-OpenAI Spinning Up: https://spinningup.openai.com/
+### Original Papers
+- **DQN**: Mnih et al.  (2015) - [Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236)
+- **Double DQN**: Van Hasselt et al. (2015) - [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)
+- **Dueling DQN**: Wang et al. (2015) - [Dueling Network Architectures](https://arxiv.org/abs/1511.06581)
 
-DeepMind Blog: https://deepmind.google/blog/
+### Benchmarks
+- Stanford CS229 (2016) - Deep Q-Learning with Recurrent Neural Networks
+- Stanford CS224R (2024) - Q*bert Baseline Performance Comparison
 
-Improvements & Extensions
-Level 1: Core Implementation ✓
- Vanilla DQN
+### Resources
+- [PyTorch DQN Tutorial](https://pytorch.org/tutorials/)
+- [OpenAI Spinning Up](https://spinningup.openai.com/)
+- [DeepMind Blog](https://deepmind.google/blog/)
 
- Experience Replay
+## License
 
- Target Network
+MIT License - See [LICENSE](LICENSE) file for details.
 
-Level 2: Algorithm Improvements
- Double DQN (reduce overestimation bias)
+## Contact
 
- Dueling DQN (separate value/advantage)
+For questions or issues: 
+1. Check the [Troubleshooting](#troubleshooting) section
+2. Review the [Benchmarks](#benchmarks)
+3. Open an issue with: 
+   - Your hyperparameters
+   - Training logs (first 10 lines)
+   - Hardware specs
+   - Expected vs actual performance
 
- Prioritized Experience Replay (sample important transitions)
+## Citation
 
-Level 3: Advanced Methods
- Rainbow DQN (combine all improvements)
-
- DRQN (add LSTM for partial observability)
-
- Noisy Networks (exploration via parameter noise)
-
-Level 4: Analysis & Visualization
- Learning curves with confidence intervals
-
- Attention heatmaps on game frames
-
- Action value heatmaps
-
- Video recordings of agent gameplay
-
-Performance Notes
-Why Q*bert is Harder Than Pong
-Larger Action Space: 6 actions vs 3 (Pong)
-
-Complex State Transitions: Levels change rules mid-training
-
-Multiple Enemies: Requires multi-objective reasoning
-
-Longer Time Horizon: Needs credit assignment over 50+ steps
-
-Partial Observability: Can't see all enemies at once
-
-Training Stability Tips
-Use Double DQN: Reduces Q-value overestimation which causes instability
-
-Monitor Variance: Watch for sudden score drops (sign of divergence)
-
-Log Frequently: Save checkpoints every 100 episodes
-
-Validate Early: Run evaluation every 500 episodes
-
-Decay Exploration: ε should decrease smoothly, not suddenly
-
-Troubleshooting
-Agent learns to "camp" in corners
-Cause: Reward shaping issue; disc mechanics not implemented
-
-Fix: Verify disc logic; check enemy collision detection
-
-Training diverges (NaNs in loss)
-Cause: Learning rate too high or reward scaling issues
-
-Fix: Reduce LR to 1e-5; normalize rewards to [-1, 1]
-
-Agent stuck at low score after 1000 episodes
-Cause: Insufficient exploration or local maxima
-
-Fix: Increase initial ε or add noise to action selection
-
-Memory errors on smaller GPUs
-Cause: Replay buffer too large or batch size too big
-
-Fix: Reduce buffer from 100k to 50k; reduce batch size to 16
-
-Citation
-If you use this code in research, please cite:
-
-text
+```bibtex
 @article{mnih2015human,
   title={Human-level control through deep reinforcement learning},
   author={Mnih, Volodymyr and others},
@@ -299,26 +268,12 @@ text
 
 @misc{dqn_qbert_2026,
   title={DQN Agent for Q*bert},
-  author={Your Name},
+  author={cudnah124},
   year={2026},
-  howpublished={\url{https://github.com/yourusername/dqn-qbert}}
+  howpublished={\url{https://github.com/cudnah124/Q-bert}}
 }
-License
-MIT License - See LICENSE file for details
+```
 
-Contact & Support
-For questions or issues:
+---
 
-Check the Troubleshooting section
-
-Review the benchmark comparisons
-
-Open an issue on GitHub with:
-
-Your hyperparameters
-
-Training logs (first 10 lines)
-
-Hardware specs
-
-Expected vs actual performance
+**Made with ❤️ for Deep Reinforcement Learning**
