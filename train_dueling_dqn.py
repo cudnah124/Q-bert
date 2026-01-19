@@ -10,6 +10,8 @@ from utils.preprocessing import preprocess_frame, FrameStack
 from utils.replay_buffer import ReplayBuffer
 from utils.logger import DQNLogger
 
+VERBOSE = False
+
 def train_dueling_dqn():
     os.makedirs(LOG_DIR, exist_ok=True)
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
@@ -27,7 +29,7 @@ def train_dueling_dqn():
     
     replay_buffer = ReplayBuffer(capacity=REPLAY_BUFFER_SIZE)
     
-    logger = DQNLogger(LOG_DIR, "dueling_dqn")
+    logger = DQNLogger(LOG_DIR, "dueling_dqn", enabled=False)
     logger.save_config({
         'algorithm': 'Dueling DQN',
         'learning_rate': LEARNING_RATE,
@@ -95,17 +97,20 @@ def train_dueling_dqn():
         if (episode + 1) % SAVE_FREQUENCY == 0:
             checkpoint_path = os.path.join(CHECKPOINT_DIR, f"ep_{episode+1}.pth")
             agent.save(checkpoint_path)
-            print(f"\nSaved: {checkpoint_path}")
+            if VERBOSE:
+                print(f"\nSaved: {checkpoint_path}")
         
         if (episode + 1) % 100 == 0:
-            print(f"\nEp {episode+1}/{TOTAL_EPISODES} | Reward: {episode_reward:.0f} | "
-                  f"Steps: {episode_length} | Eps: {epsilon:.3f}")
+            if VERBOSE:
+                print(f"\nEp {episode+1}/{TOTAL_EPISODES} | Reward: {episode_reward:.0f} | "
+                    f"Steps: {episode_length} | Eps: {epsilon:.3f}")
     
     final_path = os.path.join(CHECKPOINT_DIR, "final.pth")
     agent.save(final_path)
     logger.close()
     env.close()
-    print(f"\nDone! Saved to {final_path}")
+    if VERBOSE:
+        print(f"\nDone! Saved to {final_path}")
 
 if __name__ == "__main__":
     train_dueling_dqn()
