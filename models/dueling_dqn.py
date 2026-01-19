@@ -10,11 +10,11 @@ class DuelingDQN(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
         
-        # Value stream
+        # value
         self.value_fc1 = nn.Linear(7 * 7 * 64, 512)
         self.value_fc2 = nn.Linear(512, 1)
         
-        # Advantage stream
+        # advantage
         self.advantage_fc1 = nn.Linear(7 * 7 * 64, 512)
         self.advantage_fc2 = nn.Linear(512, num_actions)
     
@@ -30,6 +30,6 @@ class DuelingDQN(nn.Module):
         advantage = F.relu(self.advantage_fc1(x))
         advantage = self.advantage_fc2(advantage)
         
-        # Q(s,a) = V(s) + (A(s,a) - mean(A(s,a)))
+        # q(s,a) = v(s) + (a(s,a) - mean(a(s,a)))
         q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
         return q_values

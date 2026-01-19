@@ -44,7 +44,7 @@ class DoubleDQNAgent:
         
         current_q = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
         
-        # Double DQN: select with policy net, evaluate with target net
+        # double dqn selection
         with torch.no_grad():
             best_actions = self.policy_net(next_states).argmax(1)
             next_q = self.target_net(next_states).gather(1, best_actions.unsqueeze(1)).squeeze(1)

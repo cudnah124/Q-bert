@@ -11,7 +11,7 @@ class DQNLogger:
         self.algorithm_name = algorithm_name
         os.makedirs(log_dir, exist_ok=True)
         
-        # Episode log
+        # episode
         self.episode_log_path = os.path.join(log_dir, "training_log.csv")
         self.episode_log_file = open(self.episode_log_path, 'w', newline='')
         self.episode_writer = csv.writer(self.episode_log_file)
@@ -22,7 +22,7 @@ class DQNLogger:
             'buffer_reward_mean', 'buffer_reward_std'
         ])
         
-        # Step log
+        # step
         self.step_log_path = os.path.join(log_dir, "step_log.csv")
         self.step_log_file = open(self.step_log_path, 'w', newline='')
         self.step_writer = csv.writer(self.step_log_file)
