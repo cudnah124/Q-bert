@@ -44,15 +44,19 @@ class DuelingDQNAgent:
         
         current_q = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
         
+        
+        # Dueling DQN uses VANILLA training logic (only architecture differs)
+        # NOT Double DQN logic - this is a common mistake
         with torch.no_grad():
-            best_actions = self.policy_net(next_states).argmax(1)
-            next_q = self.target_net(next_states).gather(1, best_actions.unsqueeze(1)).squeeze(1)
+            next_q = self.target_net(next_states).max(1)[0]
             target_q = rewards + self.config.GAMMA * next_q * (1 - dones)
         
         loss = F.mse_loss(current_q, target_q)
         
         self.optimizer.zero_grad()
         loss.backward()
+        # Gradient clipping to prevent exploding gradients
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), 10.0)
         self.optimizer.step()
         
         return loss.item()

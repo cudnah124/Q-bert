@@ -9,6 +9,7 @@ from agents.vanilla_dqn_agent import VanillaDQNAgent
 from utils.preprocessing import preprocess_frame, FrameStack
 from utils.replay_buffer import ReplayBuffer
 from utils.logger import DQNLogger
+from utils.qbert_utils import get_level_from_ram
 
 VERBOSE = False
 
@@ -63,8 +64,9 @@ def train_vanilla_dqn():
             done = terminated or truncated
             next_state = frame_stack.step(next_obs)
             
-            if 'level' in info:
-                level_reached = max(level_reached, info['level'])
+            # Extract level from RAM since info dict doesn't contain it
+            current_level = get_level_from_ram(env.unwrapped.ale)
+            level_reached = max(level_reached, current_level)
             
             replay_buffer.push(state, action, reward, next_state, done)
             

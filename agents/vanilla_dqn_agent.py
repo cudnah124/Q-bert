@@ -52,6 +52,8 @@ class VanillaDQNAgent:
         
         self.optimizer.zero_grad()
         loss.backward()
+        # Gradient clipping to prevent exploding gradients
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), 10.0)
         self.optimizer.step()
         
         return loss.item()

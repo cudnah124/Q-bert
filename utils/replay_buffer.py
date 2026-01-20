@@ -11,7 +11,14 @@ class ReplayBuffer:
     def push(self, state, action, reward, next_state, done):
         if len(self.buffer) < self.capacity:
             self.buffer.append(None)
-        self.buffer[self.position] = (state, action, reward, next_state, done)
+        # Store with explicit float32 dtype to save memory
+        self.buffer[self.position] = (
+            state.astype(np.float32),
+            action,
+            np.float32(reward),
+            next_state.astype(np.float32),
+            np.float32(done)
+        )
         self.position = (self.position + 1) % self.capacity
     
     def sample(self, batch_size=32):

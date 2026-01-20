@@ -276,4 +276,4 @@ For questions or issues:
 
 ---
 
-**Made with ❤️ for Deep Reinforcement Learning**
+**Made by PDN for Deep Reinforcement Learning**

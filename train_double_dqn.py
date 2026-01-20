@@ -9,6 +9,7 @@ from agents.double_dqn_agent import DoubleDQNAgent
 from utils.preprocessing import preprocess_frame, FrameStack
 from utils.replay_buffer import ReplayBuffer
 from utils.logger import DQNLogger
+from utils.qbert_utils import get_level_from_ram
 
 def train_double_dqn():
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -61,8 +62,9 @@ def train_double_dqn():
             done = terminated or truncated
             next_state = frame_stack.step(next_obs)
             
-            if 'level' in info:
-                level_reached = max(level_reached, info['level'])
+            # Extract level from RAM since info dict doesn't contain it
+            current_level = get_level_from_ram(env.unwrapped.ale)
+            level_reached = max(level_reached, current_level)
             
             replay_buffer.push(state, action, reward, next_state, done)
             
