@@ -50,7 +50,8 @@ class DoubleDQNAgent:
             next_q = self.target_net(next_states).gather(1, best_actions.unsqueeze(1)).squeeze(1)
             target_q = rewards + self.config.GAMMA * next_q * (1 - dones)
         
-        loss = F.mse_loss(current_q, target_q)
+        # Use Huber loss (smooth_l1_loss) as per DQN Nature 2015 paper
+        loss = F.smooth_l1_loss(current_q, target_q)
         
         self.optimizer.zero_grad()
         loss.backward()

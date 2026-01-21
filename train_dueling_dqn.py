@@ -61,6 +61,10 @@ def train_dueling_dqn():
         for step in range(MAX_STEPS_PER_EPISODE):
             action = agent.select_action(state, epsilon)
             next_obs, reward, terminated, truncated, info = env.step(action)
+            
+            # Clip rewards to [-1, 1] as per DQN Nature 2015 paper
+            reward = max(-1.0, min(1.0, reward))
+            
             done = terminated or truncated
             next_state = frame_stack.step(next_obs)
             

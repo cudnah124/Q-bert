@@ -51,7 +51,8 @@ class DuelingDQNAgent:
             next_q = self.target_net(next_states).max(1)[0]
             target_q = rewards + self.config.GAMMA * next_q * (1 - dones)
         
-        loss = F.mse_loss(current_q, target_q)
+        # Use Huber loss (smooth_l1_loss) as per DQN Nature 2015 paper
+        loss = F.smooth_l1_loss(current_q, target_q)
         
         self.optimizer.zero_grad()
         loss.backward()
