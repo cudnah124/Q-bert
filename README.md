@@ -76,13 +76,19 @@ pip install autorom[accept-rom-license]
 
 ```python
 # Vanilla DQN
-python train.py --algorithm dqn --episodes 5000
+python train_vanilla_dqn.py
 
-# Double DQN (recommended)
-python train.py --algorithm double_dqn --episodes 5000
+# Double DQN
+python train_double_dqn.py
 
-# Dueling DQN (best performance)
-python train.py --algorithm dueling_dqn --episodes 6000
+# Dueling DQN
+python train_dueling_dqn.py
+
+# Prioritized DQN (improved sample efficiency)
+python train_prioritized_dqn.py
+
+# Rainbow DQN (state-of-the-art)
+python train_rainbow_dqn.py
 ```
 
 ### 2. Evaluate Trained Agent
@@ -135,6 +141,10 @@ Q-bert/
 | Vanilla DQN | 734 | 3,601 | Baseline |
 | Double DQN | 1,428 | 4,718 | +94% |
 | Dueling DQN | 2,256 | 6,369 | +58% |
+| Prioritized DQN | ~1,800-2,000* | 5,000 | +26-40%* |
+| Rainbow DQN | ~3,000-4,000* | 6,000 | +67-111%* |
+
+*Estimated based on typical improvements over Dueling DQN
 
 ### Historical Baselines (Stanford CS229 2016)
 
@@ -145,11 +155,11 @@ Q-bert/
 
 ### Expected Training Time
 
-| Hardware | Vanilla DQN | Double DQN | Dueling DQN |
-|----------|-------------|------------|-------------|
-| RTX 3080+ | 2-3 hours | 3-4 hours | 4-5 hours |
-| RTX 2080 | 4-6 hours | 6-8 hours | 8-10 hours |
-| CPU Only | 24-48 hours | Not recommended | Not recommended |
+| Hardware | Vanilla DQN | Double DQN | Dueling DQN | Prioritized DQN | Rainbow DQN |
+|----------|-------------|------------|-------------|-----------------|-------------|
+| RTX 3080+ | 2-3 hours | 3-4 hours | 4-5 hours | 4-6 hours | 8-12 hours |
+| RTX 2080 | 4-6 hours | 6-8 hours | 8-10 hours | 8-12 hours | 16-24 hours |
+| CPU Only | 24-48 hours | Not recommended | Not recommended | Not recommended | Not recommended |
 
 ## Configuration
 
@@ -171,9 +181,11 @@ Q-bert/
 
 ```python
 targets = {
-    "vanilla_dqn": 734,      # ± 100
-    "double_dqn": 1428,      # ± 150
-    "dueling_dqn": 2256,     # ± 200
+    "vanilla_dqn": 734,          # ± 100
+    "double_dqn": 1428,          # ± 150
+    "dueling_dqn": 2256,         # ± 200
+    "prioritized_dqn": 1900,     # ± 200 (estimated)
+    "rainbow_dqn": 3500,         # ± 500 (estimated)
 }
 ```
 
@@ -210,14 +222,14 @@ If scores are significantly lower, check:
 - [x] Target Network
 
 ### Level 2: Algorithm Improvements
-- [ ] Double DQN
-- [ ] Dueling DQN
-- [ ] Prioritized Experience Replay
+- [x] Double DQN
+- [x] Dueling DQN
+- [x] Prioritized Experience Replay
 
 ### Level 3: Advanced Methods
-- [ ] Rainbow DQN
+- [x] Rainbow DQN
 - [ ] DRQN (LSTM)
-- [ ] Noisy Networks
+- [ ] Distributional RL Visualization
 
 ### Level 4: Analysis
 - [ ] Learning curves with confidence intervals
@@ -228,9 +240,13 @@ If scores are significantly lower, check:
 ## References
 
 ### Original Papers
-- **DQN**: Mnih et al.  (2015) - [Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236)
+- **DQN**: Mnih et al. (2015) - [Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236)
 - **Double DQN**: Van Hasselt et al. (2015) - [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)
 - **Dueling DQN**: Wang et al. (2015) - [Dueling Network Architectures](https://arxiv.org/abs/1511.06581)
+- **Prioritized Replay**: Schaul et al. (2015) - [Prioritized Experience Replay](https://arxiv.org/abs/1511.05952)
+- **Rainbow**: Hessel et al. (2017) - [Rainbow: Combining Improvements in Deep RL](https://arxiv.org/abs/1710.02298)
+- **Noisy Networks**: Fortunato et al. (2017) - [Noisy Networks for Exploration](https://arxiv.org/abs/1706.10295)
+- **C51**: Bellemare et al. (2017) - [A Distributional Perspective on RL](https://arxiv.org/abs/1707.06887)
 
 ### Benchmarks
 - Stanford CS229 (2016) - Deep Q-Learning with Recurrent Neural Networks

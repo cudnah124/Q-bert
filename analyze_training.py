@@ -9,9 +9,82 @@ import os
 def analyze_training_progress(log_path="logs/vanilla_dqn/training_log.csv"):
     """Analyze training metrics to check learning progress"""
     
+def plot_training_metrics(df, model_type, log_dir):
+    """Plot training metrics: Reward, Loss, Q-values, Epsilon"""
+    # Create plots directory if it doesn't exist
+    plot_dir = os.path.join(log_dir, "plots")
+    os.makedirs(plot_dir, exist_ok=True)
+    
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+    fig.suptitle(f"{model_type} Training Analysis", fontsize=16)
+    
+    # 1. Total Reward vs Episode (with Moving Average)
+    axes[0, 0].plot(df['episode'], df['total_reward'], alpha=0.3, color='blue', label='Per Episode')
+    if len(df) >= 50:
+        window = min(100, len(df)//2)
+        sma = df['total_reward'].rolling(window=window).mean()
+        axes[0, 0].plot(df['episode'], sma, color='red', linewidth=2, label=f'SMA {window}')
+    axes[0, 0].set_title("Total Reward per Episode")
+    axes[0, 0].set_xlabel("Episode")
+    axes[0, 0].set_ylabel("Reward")
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    
+    # 2. Average Loss vs Episode
+    axes[0, 1].plot(df['episode'], df['avg_loss'], color='orange')
+    axes[0, 1].set_title("Average Loss per Episode")
+    axes[0, 1].set_xlabel("Episode")
+    axes[0, 1].set_ylabel("Loss")
+    axes[0, 1].set_yscale('log') # Loss is often better viewed on log scale
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    # 3. Average Q-Value vs Episode
+    axes[1, 0].plot(df['episode'], df['avg_q_value'], color='green')
+    axes[1, 0].set_title("Average Q-Value per Episode")
+    axes[1, 0].set_xlabel("Episode")
+    axes[1, 0].set_ylabel("Q-Value")
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    # 4. Epsilon vs Episode
+    axes[1, 1].plot(df['episode'], df['epsilon'], color='purple')
+    axes[1, 1].set_title("Exploration Rate (Epsilon)")
+    axes[1, 1].set_xlabel("Episode")
+    axes[1, 1].set_ylabel("Epsilon")
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    
+    # Save the plot
+    save_path = os.path.join(plot_dir, "training_metrics.png")
+    plt.savefig(save_path)
+    print(f"📈 Plot saved to: {save_path}")
+    
+    # Also save a separate Reward Plot for cleaner view if requested
+    plt.figure(figsize=(10, 6))
+    plt.plot(df['episode'], df['total_reward'], alpha=0.3, color='blue', label='Per Episode')
+    if len(df) >= 50:
+        window = min(100, len(df)//2)
+        sma = df['total_reward'].rolling(window=window).mean()
+        plt.plot(df['episode'], sma, color='red', linewidth=2, label=f'SMA {window}')
+    plt.title(f"{model_type}: Total Reward Over Time")
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    reward_plot_path = os.path.join(plot_dir, "reward_chart.png")
+    plt.savefig(reward_plot_path)
+    plt.close('all') # Close all figures to free memory
+    
+    return save_path
+
+def analyze_training_progress(log_path="logs/vanilla_dqn/training_log.csv"):
+    """Analyze training metrics to check learning progress"""
+    
     if not os.path.exists(log_path):
         print(f"❌ Log file not found: {log_path}")
         return None
+    
+    log_dir = os.path.dirname(log_path)
     
     # Detect model type from path
     model_type = "UNKNOWN"
@@ -61,8 +134,8 @@ def analyze_training_progress(log_path="logs/vanilla_dqn/training_log.csv"):
         print(f"  Last 100 episodes avg: {last_100:.2f}")
         print(f"  Improvement: {improvement:+.1f}%")
     else:
-        first_half = df.head(len(df)//2)['total_reward'].mean()
-        last_half = df.tail(len(df)//2)['total_reward'].mean()
+        first_half = df.head(len(df)//2)['total_reward'].mean() if len(df) > 1 else 0
+        last_half = df.tail(len(df)//2)['total_reward'].mean() if len(df) > 1 else 0
         improvement = ((last_half - first_half) / first_half * 100) if first_half != 0 else 0
         
         print(f"\n📊 Progress Check (Limited Episodes):")
@@ -105,6 +178,9 @@ def analyze_training_progress(log_path="logs/vanilla_dqn/training_log.csv"):
         print(f"  Episodes 1200+: Performance plateau")
         print(f"\n  💡 Dueling DQN typically learns faster than Vanilla (800+ episodes)")
     
+    # Plotting
+    plot_training_metrics(df, model_type, log_dir)
+    
     # Recommendations
     print(f"\n💡 Recommendations:")
     if current_eps < 1000:
@@ -121,3 +197,5 @@ if __name__ == "__main__":
     vanilla_df = analyze_training_progress("logs/vanilla_dqn/training_log.csv")
     double_df = analyze_training_progress("logs/double_dqn/training_log.csv")
     dueling_df = analyze_training_progress("logs/dueling_dqn/training_log.csv")
+    prioritized_df = analyze_training_progress("logs/prioritized_dqn/training_log.csv")
+
