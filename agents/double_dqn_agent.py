@@ -23,23 +23,25 @@ class DoubleDQNAgent:
             return random.randrange(self.config.NUM_ACTIONS)
         else:
             with torch.no_grad():
-                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device) / 255.0
                 q_values = self.policy_net(state_tensor)
                 return q_values.argmax(1).item()
     
     def get_max_q_value(self, state):
         with torch.no_grad():
-            state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+            state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device) / 255.0
             q_values = self.policy_net(state_tensor)
             return q_values.max().item()
     
     def train_step(self, replay_buffer):
         states, actions, rewards, next_states, dones = replay_buffer.sample(self.config.BATCH_SIZE)
         
-        states = torch.FloatTensor(states).to(self.device)
+        # CRITICAL FIX: Normalize uint8 states [0-255] to float [0-1]
+        states = torch.FloatTensor(states).to(self.device) / 255.0
         actions = torch.LongTensor(actions).to(self.device)
         rewards = torch.FloatTensor(rewards).to(self.device)
-        next_states = torch.FloatTensor(next_states).to(self.device)
+        # CRITICAL FIX: Normalize uint8 states [0-255] to float [0-1]
+        next_states = torch.FloatTensor(next_states).to(self.device) / 255.0
         dones = torch.FloatTensor(dones).to(self.device)
         
         current_q = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
